@@ -117,56 +117,64 @@ export function Header() {
       {/* Mobile Menu */}
       <div
         className={cn(
-          'fixed inset-0 z-40 transform transition-transform duration-300 ease-in-out md:hidden',
-          isMenuOpen ? 'translate-x-0' : '-translate-x-full'
+          "fixed inset-0 z-40 md:hidden",
+          isMenuOpen ? "block" : "hidden"
         )}
       >
-        {/* Menu content container */}
-        <div 
-          className="fixed inset-y-0 left-0 w-3/5 overflow-y-auto bg-white shadow-lg"
-          style={{ maxWidth: '60%' }}
-        >
-          <nav className="flex h-full flex-col space-y-2 p-6">
-            <div className="flex-1 space-y-2">
+        {/* Overlay */}
+        <div
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm"
+          onClick={() => setIsMenuOpen(false)}
+        />
+        
+        {/* Menu content */}
+        <div className="fixed inset-y-0 left-0 w-4/5 max-w-sm transform transition-transform duration-300 ease-in-out bg-white dark:bg-gray-950 shadow-lg">
+          <div className="flex h-full flex-col">
+            <div className="flex items-center justify-between p-4 border-b">
+              <Link href="/" className="flex items-center gap-2">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-green-600 font-bold text-white">
+                  NF
+                </div>
+                <span className="text-xl font-bold text-green-800 dark:text-green-400">NagaFreelance</span>
+              </Link>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setIsMenuOpen(false)}
+                aria-label="Close menu"
+              >
+                <X className="h-6 w-6" />
+              </Button>
+            </div>
+            <nav className="flex-1 p-4 space-y-2">
               {navItems.map((item) => (
                 <Link
                   key={item.href}
                   href={item.href}
                   className={cn(
-                    'block rounded-lg px-4 py-3 text-base font-medium transition-colors',
+                    "block rounded-lg px-4 py-3 text-base font-medium transition-colors",
                     pathname === item.href
-                      ? 'bg-green-100 text-green-800'
-                      : 'text-gray-800 hover:bg-gray-100'
+                      ? "bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300"
+                      : "text-gray-800 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-800"
                   )}
                 >
                   {item.name}
                 </Link>
               ))}
-            </div>
+            </nav>
             
             {!user && (
-              <div className="border-t border-gray-200 pt-4">
-                <Link href="/login">
-                  <Button variant="outline" className="mb-3 w-full border-gray-300 text-gray-800 hover:border-gray-400 hover:bg-gray-50">
-                    Log in
-                  </Button>
-                </Link>
-                <Link href="/register">
-                  <Button className="w-full bg-green-600 hover:bg-green-700">
-                    Sign up
-                  </Button>
-                </Link>
+              <div className="border-t p-4 space-y-2">
+                <Button variant="outline" className="w-full" asChild>
+                  <Link href="/login">Log in</Link>
+                </Button>
+                <Button className="w-full" asChild>
+                  <Link href="/register">Sign up</Link>
+                </Button>
               </div>
             )}
-          </nav>
+          </div>
         </div>
-        
-        {/* Click outside to close */}
-        <div 
-          className="fixed inset-0 bg-black/30"
-          onClick={() => setIsMenuOpen(false)}
-          style={{ marginLeft: '60%' }}
-        />
       </div>
     </>
   )
