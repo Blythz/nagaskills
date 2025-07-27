@@ -10,7 +10,25 @@ const inter = Inter({ subsets: ["latin"] })
 export const metadata: Metadata = {
   title: "NagaFreelance - Find Local Professionals in Nagaland",
   description: "Connect with skilled carpenters, masons, teachers, writers, and more across Nagaland",
-    generator: 'v0.dev'
+  generator: 'v0.dev',
+  viewport: {
+    width: 'device-width',
+    initialScale: 1,
+    maximumScale: 1,
+    viewportFit: 'cover',
+  },
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#ffffff' },
+    { media: '(prefers-color-scheme: dark)', color: '#1a1a1a' },
+  ],
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: 'NagaFreelance',
+  },
+  formatDetection: {
+    telephone: false,
+  },
 }
 
 export default function RootLayout({

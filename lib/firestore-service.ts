@@ -357,6 +357,39 @@ export const professionalsService = {
       throw error
     }
   },
+
+  // Get all unique professions from professionals
+  async getUniqueProfessions(): Promise<string[]> {
+    try {
+      const professionals = await this.getProfessionals()
+      // Get unique professions and sort them
+      const uniqueProfessions = Array.from(
+        new Set(professionals.map(p => p.profession).filter(Boolean))
+      ).sort()
+      
+      return ['All', ...uniqueProfessions]
+    } catch (error) {
+      console.error("Error fetching unique professions:", error)
+      // Return default list if there's an error
+      return [
+        'All',
+        'Web Developer',
+        'Mobile App Developer',
+        'Graphic Designer',
+        'Content Writer',
+        'Digital Marketer',
+        'Data Analyst',
+        'UI/UX Designer',
+        'Photographer',
+        'Video Editor',
+        'Translator',
+        'Virtual Assistant',
+        'Accountant',
+        'Tutor',
+        'Other'
+      ]
+    }
+  },
 }
 
 // Proposals service

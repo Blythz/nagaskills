@@ -12,7 +12,7 @@ import { NotificationsDropdown } from "@/components/notifications-dropdown"
 
 export function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
-  const { user } = useAuth()
+  const { user, userProfile } = useAuth()
   const pathname = usePathname()
 
   // Close menu when route changes
@@ -40,8 +40,7 @@ export function Header() {
 
   return (
     <>
-      {/* Main Header */}
-      <header className="sticky top-0 z-30 border-b bg-white/80 backdrop-blur-sm dark:bg-gray-900/80">
+      <header className="sticky top-0 z-50 border-b bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm">
         <div className="container mx-auto px-4 py-3">
           <div className="flex h-14 items-center justify-between">
             <div className="flex items-center gap-4">
@@ -59,7 +58,7 @@ export function Header() {
               
               {/* Logo */}
               <Link href="/" className="flex items-center gap-2">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-green-600 font-bold text-white">
+                <div className="w-8 h-8 bg-green-600 rounded-lg flex items-center justify-center text-white font-bold">
                   NF
                 </div>
                 <span className="text-xl font-bold text-green-800 dark:text-green-400">NagaFreelance</span>
@@ -67,7 +66,7 @@ export function Header() {
             </div>
             
             {/* Desktop Navigation */}
-            <nav className="hidden items-center gap-6 md:flex">
+            <nav className="hidden md:flex items-center gap-6">
               {navItems.map((item) => (
                 <Link
                   key={item.href}
@@ -91,7 +90,7 @@ export function Header() {
                   <UserDropdown />
                 </>
               ) : (
-                <div className="hidden items-center gap-2 md:flex">
+                <div className="hidden md:flex items-center gap-2">
                   <Button variant="outline" size="sm" asChild>
                     <Link href="/login">Log in</Link>
                   </Button>
@@ -113,61 +112,5 @@ export function Header() {
           </div>
         </div>
       </header>
-      
-      {/* Mobile Menu */}
-      <div
-        className={cn(
-          'fixed inset-0 z-40 transform transition-transform duration-300 ease-in-out md:hidden',
-          isMenuOpen ? 'translate-x-0' : '-translate-x-full'
-        )}
-      >
-        {/* Menu content container */}
-        <div 
-          className="fixed inset-y-0 left-0 w-3/5 overflow-y-auto bg-white shadow-lg"
-          style={{ maxWidth: '60%' }}
-        >
-          <nav className="flex h-full flex-col space-y-2 p-6">
-            <div className="flex-1 space-y-2">
-              {navItems.map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={cn(
-                    'block rounded-lg px-4 py-3 text-base font-medium transition-colors',
-                    pathname === item.href
-                      ? 'bg-green-100 text-green-800'
-                      : 'text-gray-800 hover:bg-gray-100'
-                  )}
-                >
-                  {item.name}
-                </Link>
-              ))}
-            </div>
-            
-            {!user && (
-              <div className="border-t border-gray-200 pt-4">
-                <Link href="/login">
-                  <Button variant="outline" className="mb-3 w-full border-gray-300 text-gray-800 hover:border-gray-400 hover:bg-gray-50">
-                    Log in
-                  </Button>
-                </Link>
-                <Link href="/register">
-                  <Button className="w-full bg-green-600 hover:bg-green-700">
-                    Sign up
-                  </Button>
-                </Link>
-              </div>
-            )}
-          </nav>
-        </div>
-        
-        {/* Click outside to close */}
-        <div 
-          className="fixed inset-0 bg-black/30"
-          onClick={() => setIsMenuOpen(false)}
-          style={{ marginLeft: '60%' }}
-        />
-      </div>
-    </>
   )
 }

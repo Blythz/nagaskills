@@ -1,6 +1,8 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
+import { useAuth } from "@/lib/auth-context"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -24,24 +26,7 @@ import {
 } from "lucide-react"
 import { professionalsService, type ProfessionalProfile } from "@/lib/firestore-service"
 import { ReviewsDisplay } from "@/components/reviews-display"
-
-const PROFESSIONS = [
-  "All",
-  "Web Developer",
-  "Mobile App Developer",
-  "Graphic Designer",
-  "Content Writer",
-  "Digital Marketer",
-  "Data Analyst",
-  "UI/UX Designer",
-  "Photographer",
-  "Video Editor",
-  "Translator",
-  "Virtual Assistant",
-  "Accountant",
-  "Tutor",
-  "Other",
-]
+import { Header } from "@/components/header"
 
 const DISTRICTS = [
   "All Districts",
@@ -59,22 +44,53 @@ const DISTRICTS = [
 ]
 
 export default function ProfessionalsPage() {
+  // All hooks must be called at the top level
+  const router = useRouter()
+  const { user, loading: authLoading } = useAuth()
+  
+  // State for professionals data
   const [professionals, setProfessionals] = useState<ProfessionalProfile[]>([])
   const [filteredProfessionals, setFilteredProfessionals] = useState<ProfessionalProfile[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
   const [selectedProfessional, setSelectedProfessional] = useState<ProfessionalProfile | null>(null)
   const [showProfileModal, setShowProfileModal] = useState(false)
-
-  // Filters
+  
+  // State for filters and professions
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedProfession, setSelectedProfession] = useState("All")
   const [selectedLocation, setSelectedLocation] = useState("All Districts")
   const [verifiedOnly, setVerifiedOnly] = useState(false)
   const [minRating, setMinRating] = useState(0)
+  const [professions, setProfessions] = useState<string[]>([])
+  const [loadingProfessions, setLoadingProfessions] = useState(true)
 
+  // Redirect to login if not authenticated
   useEffect(() => {
-    loadProfessionals()
+    if (!authLoading && !user) {
+      router.push('/login?redirect=/professionals')
+    }
+  }, [user, authLoading, router])
+
+  // Load professions and professionals when component mounts
+  useEffect(() => {
+    const loadInitialData = async () => {
+      try {
+        // Load professions first
+        const professionsList = await professionalsService.getUniqueProfessions()
+        setProfessions(professionsList)
+        
+        // Then load professionals
+        await loadProfessionals()
+      } catch (error) {
+        console.error("Error loading initial data:", error)
+        setError("Failed to load data. Please try again.")
+      } finally {
+        setLoadingProfessions(false)
+      }
+    }
+    
+    loadInitialData()
   }, [])
 
   useEffect(() => {
@@ -142,146 +158,153 @@ export default function ProfessionalsPage() {
     return responseTime.replace("_", " ")
   }
 
-  if (loading) {
+  // Render loading state if checking auth
+  if (authLoading || !user) {
     return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="animate-pulse space-y-6">
-          <div className="h-8 bg-gray-200 rounded w-1/4"></div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[...Array(6)].map((_, i) => (
-              <div key={i} className="h-64 bg-gray-200 rounded-lg"></div>
-            ))}
+      <div className="min-h-screen bg-gray-50">
+        <Header />
+        <div className="flex min-h-screen items-center justify-center">
+          <div className="text-center">
+            <div className="h-12 w-12 animate-spin rounded-full border-4 border-green-500 border-t-transparent mx-auto mb-4"></div>
+            <p className="text-gray-600 dark:text-gray-300">Loading...</p>
           </div>
         </div>
       </div>
     )
   }
 
+  // Render main content
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">Find Professionals</h1>
-        <p className="text-gray-600">Discover talented professionals in Nagaland ready to help with your projects</p>
-      </div>
+    <div className="min-h-screen bg-gray-50">
+      <Header />
+      <div className="container mx-auto px-4 py-8">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold mb-2">Find Professionals</h1>
+          <p className="text-gray-600">Discover talented professionals in Nagaland ready to help with your projects</p>
+        </div>
 
-      {error && (
-        <Alert variant="destructive" className="mb-6">
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-      )}
+        {error && (
+          <Alert variant="destructive" className="mb-6">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
 
-      {/* Filters */}
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Filter className="w-5 h-5" />
-            Filters
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {/* Search */}
-            <div className="space-y-2">
-              <Label htmlFor="search">Search</Label>
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                <Input
-                  id="search"
-                  placeholder="Name, skills, profession..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
+        {/* Filters */}
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Filter className="w-5 h-5" />
+              Filters
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              {/* Search */}
+              <div className="space-y-2">
+                <Label htmlFor="search">Search</Label>
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                  <Input
+                    id="search"
+                    placeholder="Name, skills, profession..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+              </div>
+
+              {/* Profession */}
+              <div className="space-y-2">
+                <Label>Profession</Label>
+                <Select value={selectedProfession} onValueChange={setSelectedProfession}>
+                  <SelectTrigger>
+                    <SelectValue placeholder={loadingProfessions ? "Loading..." : "Select profession"} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {loadingProfessions ? (
+                      <div className="p-2 text-sm text-gray-500">Loading professions...</div>
+                    ) : (
+                      professions.map((profession) => (
+                        <SelectItem key={profession} value={profession}>
+                          {profession}
+                        </SelectItem>
+                      ))
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Location */}
+              <div className="space-y-2">
+                <Label>Location</Label>
+                <Select value={selectedLocation} onValueChange={setSelectedLocation}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {DISTRICTS.map((district) => (
+                      <SelectItem key={district} value={district}>
+                        {district}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Rating */}
+              <div className="space-y-2">
+                <Label>Minimum Rating</Label>
+                <Select value={minRating.toString()} onValueChange={(value) => setMinRating(Number(value))}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="0">Any Rating</SelectItem>
+                    <SelectItem value="4">4+ Stars</SelectItem>
+                    <SelectItem value="4.5">4.5+ Stars</SelectItem>
+                    <SelectItem value="5">5 Stars</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
 
-            {/* Profession */}
-            <div className="space-y-2">
-              <Label>Profession</Label>
-              <Select value={selectedProfession} onValueChange={setSelectedProfession}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {PROFESSIONS.map((profession) => (
-                    <SelectItem key={profession} value={profession}>
-                      {profession}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            <div className="flex items-center space-x-2 mt-4">
+              <input
+                type="checkbox"
+                id="verified"
+                checked={verifiedOnly}
+                onChange={(e) => setVerifiedOnly(e.target.checked)}
+                className="w-4 h-4 text-green-600 border-gray-300 rounded focus:ring-green-500"
+              />
+              <Label htmlFor="verified" className="text-sm font-medium">
+                Verified professionals only
+              </Label>
             </div>
-
-            {/* Location */}
-            <div className="space-y-2">
-              <Label>Location</Label>
-              <Select value={selectedLocation} onValueChange={setSelectedLocation}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {DISTRICTS.map((district) => (
-                    <SelectItem key={district} value={district}>
-                      {district}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Rating */}
-            <div className="space-y-2">
-              <Label>Minimum Rating</Label>
-              <Select value={minRating.toString()} onValueChange={(value) => setMinRating(Number(value))}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="0">Any Rating</SelectItem>
-                  <SelectItem value="4">4+ Stars</SelectItem>
-                  <SelectItem value="4.5">4.5+ Stars</SelectItem>
-                  <SelectItem value="5">5 Stars</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          <div className="flex items-center space-x-2 mt-4">
-            <input
-              type="checkbox"
-              id="verified"
-              checked={verifiedOnly}
-              onChange={(e) => setVerifiedOnly(e.target.checked)}
-              className="w-4 h-4 text-green-600 border-gray-300 rounded focus:ring-green-500"
-            />
-            <Label htmlFor="verified" className="text-sm font-medium">
-              Verified professionals only
-            </Label>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Results */}
-      <div className="mb-4">
-        <p className="text-gray-600">
-          Showing {filteredProfessionals.length} of {professionals.length} professionals
-        </p>
-      </div>
-
-      {filteredProfessionals.length === 0 ? (
-        <Card>
-          <CardContent className="text-center py-12">
-            <Search className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-            <h3 className="text-lg font-semibold mb-2">No professionals found</h3>
-            <p className="text-gray-600">Try adjusting your filters to see more results.</p>
           </CardContent>
         </Card>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredProfessionals.map((professional) => (
-            <Card key={professional.id} className="hover:shadow-lg transition-shadow">
-              <CardHeader>
+
+        {/* Results */}
+        <div className="mb-4">
+          <p className="text-gray-600">
+            Showing {filteredProfessionals.length} of {professionals.length} professionals
+          </p>
+        </div>
+
+        {filteredProfessionals.length === 0 ? (
+          <Card>
+            <CardContent className="text-center py-12">
+              <Search className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+              <h3 className="text-lg font-semibold mb-2">No professionals found</h3>
+              <p className="text-gray-600">Try adjusting your filters to see more results.</p>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredProfessionals.map((professional) => (
+              <Card key={professional.id} className="hover:shadow-lg transition-shadow">
+                <CardHeader>
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-3">
                     <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center">
@@ -456,13 +479,21 @@ export default function ProfessionalsPage() {
                   </CardContent>
                 </Card>
 
-                {/* Reviews Section */}
-                <ReviewsDisplay professional={selectedProfessional} />
+                {/* Reviews */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Reviews</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <ReviewsDisplay professional={selectedProfessional} />
+                  </CardContent>
+                </Card>
               </div>
             </>
           )}
         </DialogContent>
       </Dialog>
+      </div>
     </div>
   )
 }
